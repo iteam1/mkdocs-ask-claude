@@ -31,7 +31,6 @@ mkdocs-claude-chat/
 │           ├── plugin.py         # BasePlugin subclass + hooks
 │           ├── config.py         # Plugin config schema
 │           ├── server.py         # Chat backend (ClaudeSDKClient)
-│           ├── tools.py          # Custom @tool definitions for docs
 │           ├── assets.py         # CSS/JS injection helpers
 │           └── logger.py         # Logging adapter
 ├── tests/
@@ -137,20 +136,18 @@ Inject CSS/JS in `on_config` by appending to `config["extra_css"]` / `config["ex
 
 ## V. Chat Backend
 
-Use `ClaudeSDKClient` from `claude-agent-sdk-python`. Define custom `@tool` functions in `_internal/tools.py` that fetch from `/llms.txt` and per-page `.md` URLs.
+Use `ClaudeSDKClient` from `claude-agent-sdk-python`. Claude fetches documentation content autonomously using its built-in tools (WebFetch, curl) — no custom `@tool` definitions are needed.
 
-```python
-@tool("fetch_llmstxt", "Get the documentation index", {})
-async def fetch_llmstxt(args): ...
+The `llmstxt_url` config value is passed to Claude as a hint in the system prompt:
 
-@tool("fetch_page", "Get the content of a documentation page", {"url": str})
-async def fetch_page(args): ...
-```
+1. Check `<llmstxt_url>` — if it exists, use it as the documentation index (see https://llmstxt.org/)
+2. Traverse links in `llms.txt` with curl/WebFetch to find relevant sections
+3. If no `llms.txt`, fall back to WebFetch or WebSearch
 
 **Rules:**
-- Tools fetch from HTTP URLs — never from raw filesystem paths.
-- Keep tools stateless; pass config via closure.
-- The chat backend runs as a local server (FastAPI/aiohttp) spawned by the plugin or invoked via JS fetch from the browser.
+- No `tools.py` — Claude's built-in tools replace custom fetch logic.
+- The system prompt is the integration point between the plugin config and Claude's behaviour.
+- The chat backend runs as a local server spawned by the plugin during `mkdocs serve`.
 
 ---
 

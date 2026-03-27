@@ -31,7 +31,7 @@ Chat widget  →  FastAPI sidecar  →  Claude (via claude-agent-sdk)
 ## Quick install
 
 ```bash
-pip install mkdocs-llmstxt git+https://github.com/iteam1/mkdocs-claude-chat
+pip install git+https://github.com/iteam1/mkdocs-claude-chat
 ```
 
 Add to `mkdocs.yml`:

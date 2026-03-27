@@ -17,6 +17,9 @@
   let panelOpen = false;
   let panelWidth = parseInt(localStorage.getItem(STORAGE_KEY) || "360", 10);
 
+  // Unique ID for this browser session — maintains conversation history on server.
+  const sessionId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+
   // Button drag state
   let buttonX = window.innerWidth - 28 - 16;   // center X (28 = half of 56px btn)
   let buttonY = window.innerHeight - 28 - 16;  // center Y
@@ -177,7 +180,7 @@
     const res = await fetch(cfg.backendUrl + "/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: question, llmstxt_url: cfg.llmstxtUrl, system_prompt: cfg.systemPrompt }),
+      body: JSON.stringify({ question: question, llmstxt_url: cfg.llmstxtUrl, system_prompt: cfg.systemPrompt, session_id: sessionId }),
     });
     if (!res.ok) {
       throw new Error("Server error: " + res.status);

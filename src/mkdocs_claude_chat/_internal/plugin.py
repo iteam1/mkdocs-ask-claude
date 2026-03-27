@@ -62,10 +62,12 @@ class MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig]):
         return config
 
     def on_post_build(self, *, config: MkDocsConfig, **kwargs: object) -> None:
-        """Copy bundled chat assets into the built site directory.
+        """Copy bundled chat assets and push the resolved llmstxt_url to the server.
 
         Called once after all pages have been written. Copies ``chat.css`` and
-        ``chat.js`` from the package into ``<site_dir>/assets/``.
+        ``chat.js`` from the package into ``<site_dir>/assets/``. When serving,
+        also tells the chat backend which URL to use for loading docs — so the
+        browser never needs to send it.
 
         Args:
             config: The global MkDocs configuration object.
@@ -75,6 +77,8 @@ class MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig]):
             return
         assets.copy_to_site(config["site_dir"])
         _logger.debug("copied chat assets to site_dir")
+        if self._is_serving:
+            server.configure(self._llmstxt_url)
 
     def on_page_context(
         self,

@@ -18,27 +18,25 @@ from mkdocs_claude_chat._internal.logger import get_logger
 _logger = get_logger(__name__)
 
 _SYSTEM_PROMPT_WITH_LLMSTXT = """\
-You are a documentation assistant. Your ONLY knowledge source is the documentation site. \
-You MUST always fetch and read the docs before answering — never answer from memory alone.
+You are a documentation assistant. Your primary knowledge source is the documentation site. \
+You MUST fetch and read the docs before answering — never answer from memory alone.
 
 ## Step-by-step — follow this every time, no exceptions
 
-1. **Fetch the index**: Use curl or WebFetch to GET `{llmstxt_url}`.
+1. **Fetch the index**: Run `curl -s "{llmstxt_url}"` to get the documentation index.
 2. **Parse the index**: The file lists documentation pages as markdown links `[title](url)`.
    Read every link title and URL.
 3. **Identify relevant pages**: Based on the user's question, pick the 1–3 pages most \
 likely to contain the answer.
-4. **Fetch those pages**: Use curl or WebFetch to GET each selected URL and read its content.
-5. **Synthesize the answer**: Write your answer using ONLY what you found in the fetched pages. \
+4. **Fetch those pages**: Run `curl -s <url>` for each selected page and read its content.
+5. **Synthesize the answer**: Write your answer using what you found in the fetched pages. \
 Quote or cite specific sections when helpful.
 6. **If docs don't cover it**: Say clearly that the documentation does not cover this topic, \
-then you may briefly reference external resources or your general knowledge as a supplement — \
-but label it explicitly as "outside the docs".
+then answer from your general knowledge — but label it explicitly as "outside the docs".
 
 ## Rules
-- Do NOT skip steps 1–4. Fetch the docs first, always.
-- Do NOT answer from training data when the docs are available.
-- If a fetch fails, tell the user and try an alternative URL from the index.
+- Always run steps 1–4 before composing your answer.
+- If a curl fetch fails (non-200 or empty), tell the user and try another page from the index.
 - Keep answers concise and grounded in what you actually read.\
 """
 
@@ -47,17 +45,16 @@ You are a documentation assistant. No documentation index URL was provided.
 
 ## Step-by-step
 
-1. **Try to discover docs**: Use WebSearch to find the official documentation for this site, \
-or use WebFetch if you know the site URL.
+1. **Try to discover docs**: Run `curl -s <url>` if you know the site URL, or ask the user \
+for the documentation URL.
 2. **Fetch relevant pages**: Read the content of the pages you find.
-3. **Synthesize the answer**: Write your answer using what you found in the fetched pages. \
-Cite the source URL.
-4. **If nothing found**: Say you could not locate the documentation, then answer from general \
-knowledge and label it clearly as such.
+3. **Synthesize the answer**: Write your answer using what you found. Cite the source URL.
+4. **If nothing found**: Say you could not locate the documentation, then answer from \
+general knowledge and label it clearly as such.
 
 ## Rules
-- Always try to find and read actual documentation before answering.
-- Do NOT answer from training data without attempting a search first.\
+- Always attempt a curl fetch before answering from memory.
+- Do NOT answer from training data without first trying to fetch actual documentation.\
 """
 
 
@@ -113,7 +110,11 @@ async def _stream_claude(question: str, llmstxt_url: str, system_prompt: str = "
         ending with ``data: [DONE]\\n\\n``.
     """
     resolved_prompt = system_prompt.strip() or _build_system_prompt(llmstxt_url)
-    options = ClaudeAgentOptions(system_prompt=resolved_prompt)
+    options = ClaudeAgentOptions(
+        system_prompt=resolved_prompt,
+        permission_mode="bypassPermissions",
+        allowed_tools=["Bash"],
+    )
     try:
         async for message in query(prompt=question, options=options):
             if isinstance(message, AssistantMessage):

@@ -30,3 +30,6 @@ site/
 
 # OS
 .DS_Store
+
+# UV
+uv.lock

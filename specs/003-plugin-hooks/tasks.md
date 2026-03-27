@@ -12,8 +12,8 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 Verify `src/mkdocs_claude_chat/_internal/plugin.py` exists as a stub with `MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig])`
-- [ ] T002 Verify `logger.py` and `assets.py` are implemented (features 001 and 002)
+- [x] T001 Verify `src/mkdocs_claude_chat/_internal/plugin.py` exists as a stub with `MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig])`
+- [x] T002 Verify `logger.py` and `assets.py` are implemented (features 001 and 002)
 
 ---
 
@@ -29,10 +29,10 @@ No blocking prerequisites beyond 001/002. Proceed to user stories.
 
 **Independent Test**: Run `mkdocs build`; verify `site/assets/chat.css` and `site/assets/chat.js` exist.
 
-- [ ] T003 [US1] Add module-level imports and `_logger = get_logger(__name__)` to `src/mkdocs_claude_chat/_internal/plugin.py`
-- [ ] T004 [US1] Declare `_llmstxt_url: str` as class-level type hint on `MkdocsClaudeChatPlugin` in `src/mkdocs_claude_chat/_internal/plugin.py`
-- [ ] T005 [US1] Implement `on_config(self, config, **kwargs)` — short-circuit on disabled, resolve `llmstxt_url`, call `assets.register()` in `src/mkdocs_claude_chat/_internal/plugin.py`
-- [ ] T006 [US1] Implement `on_post_build(self, *, config, **kwargs)` — short-circuit on disabled, call `assets.copy_to_site()` in `src/mkdocs_claude_chat/_internal/plugin.py`
+- [x] T003 [US1] Add module-level imports and `_logger = get_logger(__name__)` to `src/mkdocs_claude_chat/_internal/plugin.py`
+- [x] T004 [US1] Declare `_llmstxt_url: str` as class-level type hint on `MkdocsClaudeChatPlugin` in `src/mkdocs_claude_chat/_internal/plugin.py`
+- [x] T005 [US1] Implement `on_config(self, config, **kwargs)` — short-circuit on disabled, resolve `llmstxt_url`, call `assets.register()` in `src/mkdocs_claude_chat/_internal/plugin.py`
+- [x] T006 [US1] Implement `on_post_build(self, *, config, **kwargs)` — short-circuit on disabled, call `assets.copy_to_site()` in `src/mkdocs_claude_chat/_internal/plugin.py`
 
 **Checkpoint**: `on_config` + `on_post_build` complete — US1 done.
 
@@ -44,8 +44,8 @@ No blocking prerequisites beyond 001/002. Proceed to user stories.
 
 **Independent Test**: After `on_page_context` runs, assert `context["claude_chat_config"]` contains all five expected keys.
 
-- [ ] T007 [US2] Implement `on_page_context(self, context, /, *, page, config, **kwargs)` — short-circuit on disabled, inject `claude_chat_config` dict in `src/mkdocs_claude_chat/_internal/plugin.py`
-- [ ] T008 [US2] Add Google-style docstrings to all three hooks in `src/mkdocs_claude_chat/_internal/plugin.py`
+- [x] T007 [US2] Implement `on_page_context(self, context, /, *, page, config, **kwargs)` — short-circuit on disabled, inject `claude_chat_config` dict in `src/mkdocs_claude_chat/_internal/plugin.py`
+- [x] T008 [US2] Add Google-style docstrings to all three hooks in `src/mkdocs_claude_chat/_internal/plugin.py`
 
 **Checkpoint**: All three hooks complete — US1 and US2 done.
 
@@ -53,7 +53,7 @@ No blocking prerequisites beyond 001/002. Proceed to user stories.
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T009 [P] Write unit tests for all three hooks in `tests/test_plugin.py` using real `MkDocsConfig` objects (no mocks for MkDocs internals), covering: assets registered, llmstxt_url derived/explicit, disabled short-circuit, files copied, context injected
+- [x] T009 [P] Write unit tests for all three hooks in `tests/test_plugin.py` using real `MkDocsConfig` objects (no mocks for MkDocs internals), covering: assets registered, llmstxt_url derived/explicit, disabled short-circuit, files copied, context injected
 
 ---
 

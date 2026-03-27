@@ -287,6 +287,24 @@ body.cc-resizing {
   border-top: 1px solid var(--cc-border);
   margin: 0.5em 0;
 }
+.cc-bubble-assistant table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.4em 0;
+  font-size: 0.9em;
+  overflow-x: auto;
+  display: block;
+}
+.cc-bubble-assistant th,
+.cc-bubble-assistant td {
+  border: 1px solid var(--cc-border);
+  padding: 5px 10px;
+  text-align: left;
+}
+.cc-bubble-assistant th {
+  background: rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
 
 /* ── Input row ───────────────────────────────────────────────────── */
 .cc-input-row {

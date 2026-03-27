@@ -195,6 +195,34 @@
       // hr
       if (/^[-*_]{3,}\s*$/.test(line)) { out.push("<hr>"); i++; continue; }
 
+      // table — collect consecutive pipe-delimited rows
+      if (/^\s*\|/.test(line)) {
+        var rows = [];
+        while (i < lines.length && /^\s*\|/.test(lines[i])) { rows.push(lines[i]); i++; }
+        var sepIdx = -1;
+        for (var ri = 0; ri < rows.length; ri++) {
+          if (/^\s*\|[\s|:-]*---[\s|:-]*\|/.test(rows[ri])) { sepIdx = ri; break; }
+        }
+        if (sepIdx > 0) {
+          var tbl = "<table><thead>";
+          for (var ri = 0; ri < sepIdx; ri++) {
+            tbl += "<tr>" + rows[ri].replace(/^\s*\||\|\s*$/g, "").split("|").map(function(c) {
+              return "<th>" + inlineMd(c.trim()) + "</th>";
+            }).join("") + "</tr>";
+          }
+          tbl += "</thead><tbody>";
+          for (var ri = sepIdx + 1; ri < rows.length; ri++) {
+            tbl += "<tr>" + rows[ri].replace(/^\s*\||\|\s*$/g, "").split("|").map(function(c) {
+              return "<td>" + inlineMd(c.trim()) + "</td>";
+            }).join("") + "</tr>";
+          }
+          out.push(tbl + "</tbody></table>");
+        } else {
+          rows.forEach(function(r) { out.push("<p>" + inlineMd(r) + "</p>"); });
+        }
+        continue;
+      }
+
       // unordered list — collect consecutive items
       if (/^[*\-+]\s/.test(line)) {
         var items = [];

@@ -10,18 +10,17 @@ graph TD
     plugin["plugin.py\nMkDocs plugin entry point\non_config · on_post_build\non_page_context"]
     assets["assets.py\nInjects chat.js and chat.css\ninto the built site"]
     server["server.py\nChat backend\nClaudeSDKClient session\nstreams answers"]
-    tools["tools.py\nClaude tools\nfetch_llmstxt()\nfetch_page()"]
     logger["logger.py\nPlugin-namespaced\nlogging utilities"]
 
     config -->|imported by| plugin
     plugin -->|build time: inject CSS/JS| assets
     plugin -->|runtime: delegate question| server
-    server -->|Claude calls| tools
-    tools -->|fetches docs from| llmstxt["/llms.txt\n(external)"]
+    server -->|passes llmstxt_url hint| Claude["Claude\nbuilt-in tools\nWebFetch · curl · WebSearch"]
+    Claude -->|checks first| llmstxt["/llms.txt (optional)"]
+    Claude -->|fallback| web["WebFetch / WebSearch"]
 
     logger -.->|used by| plugin
     logger -.->|used by| server
-    logger -.->|used by| tools
     logger -.->|used by| assets
 ```
 
@@ -55,15 +54,15 @@ When a visitor asks a question in the widget:
 sequenceDiagram
     participant Browser
     participant server.py
-    participant tools.py
     participant Claude
+    participant Web
 
     Browser->>server.py: user question
-    server.py->>Claude: start ClaudeSDKClient session
-    Claude->>tools.py: fetch_llmstxt()
-    tools.py-->>Claude: documentation index
-    Claude->>tools.py: fetch_page(url)
-    tools.py-->>Claude: page content
+    server.py->>Claude: ClaudeSDKClient session\n+ llmstxt_url hint in system prompt
+    Claude->>Web: curl/WebFetch <url>/llms.txt
+    Web-->>Claude: doc index (if exists)
+    Claude->>Web: fetch relevant pages
+    Web-->>Claude: page content
     Claude-->>server.py: answer
     server.py-->>Browser: streamed response
 ```
@@ -76,5 +75,4 @@ sequenceDiagram
 | `plugin.py` | Partial | Class declared, hooks not implemented |
 | `assets.py` | Stub | Empty |
 | `server.py` | Stub | Empty |
-| `tools.py` | Stub | Empty |
 | `logger.py` | Stub | Empty |

@@ -12,6 +12,6 @@ class _PluginConfig(Config):
     enabled = mkconf.Type(bool, default=True)
     model = mkconf.Type(str, default="claude-sonnet-4-6")
     system_prompt = mkconf.Optional(mkconf.Type(str))
-    llmstxt_url = mkconf.Optional(mkconf.Type(str))
+    llmstxt_url = mkconf.Optional(mkconf.Type(str))  # hint passed to Claude; auto-derived from site_url if omitted
     chat_title = mkconf.Type(str, default="Ask Claude")
     position = mkconf.Type(str, default="bottom-right")

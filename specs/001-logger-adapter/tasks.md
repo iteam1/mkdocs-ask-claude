@@ -14,7 +14,7 @@
 
 **Purpose**: Confirm the target file exists and is ready for implementation
 
-- [ ] T001 Verify `src/mkdocs_claude_chat/_internal/logger.py` exists as a stub (docstring + `from __future__ import annotations` only)
+- [x] T001 Verify `src/mkdocs_claude_chat/_internal/logger.py` exists as a stub (docstring + `from __future__ import annotations` only)
 
 ---
 
@@ -32,9 +32,9 @@
 
 ### Implementation
 
-- [ ] T002 [US1] Implement `_PluginLogger(logging.LoggerAdapter)` with `process()` method that prepends `claude-chat: ` to every message in `src/mkdocs_claude_chat/_internal/logger.py`
-- [ ] T003 [US1] Implement `get_logger(name: str) -> _PluginLogger` that creates a logger under `mkdocs.plugins.claude-chat.<last segment of name>` in `src/mkdocs_claude_chat/_internal/logger.py`
-- [ ] T004 [US1] Add `from __future__ import annotations`, type hints, and Google-style docstrings to all public items in `src/mkdocs_claude_chat/_internal/logger.py`
+- [x] T002 [US1] Implement `_PluginLogger(logging.LoggerAdapter)` with `process()` method that prepends `claude-chat: ` to every message in `src/mkdocs_claude_chat/_internal/logger.py`
+- [x] T003 [US1] Implement `get_logger(name: str) -> _PluginLogger` that creates a logger under `mkdocs.plugins.claude-chat.<last segment of name>` in `src/mkdocs_claude_chat/_internal/logger.py`
+- [x] T004 [US1] Add `from __future__ import annotations`, type hints, and Google-style docstrings to all public items in `src/mkdocs_claude_chat/_internal/logger.py`
 
 **Checkpoint**: `get_logger(__name__)` works and produces prefixed output — US1 complete.
 
@@ -42,8 +42,8 @@
 
 ## Phase 4: Polish & Cross-Cutting Concerns
 
-- [ ] T005 [P] Write unit tests for `_PluginLogger` and `get_logger` in `tests/test_logger.py` covering: return type, prefix, namespace, all log levels, empty name edge case
-- [ ] T006 [P] Update `constitution.md` §V to remove `tools.py` reference (already outdated — align with CLAUDE.md decision)
+- [x] T005 [P] Write unit tests for `_PluginLogger` and `get_logger` in `tests/test_logger.py` covering: return type, prefix, namespace, all log levels, empty name edge case
+- [x] T006 [P] Update `constitution.md` §V to remove `tools.py` reference (already outdated — align with CLAUDE.md decision)
 
 ---
 

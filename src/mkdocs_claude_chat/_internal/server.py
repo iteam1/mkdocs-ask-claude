@@ -77,43 +77,38 @@ def _llms_full_path() -> Path | None:
 _SYSTEM_PROMPT = """\
 You are a documentation assistant.
 
-## MANDATORY: Always look up the docs before answering any question
+## Documentation index (llms.txt)
 
-Use the following strategy in order — move to the next only if the previous fails:
+The available documentation pages are listed below. \
+Use this index to know exactly which pages exist and where to fetch them.
 
-**Option 1 — llmstxt.org protocol (preferred)**
-curl -s {llmstxt_url}
-→ Read the index, identify relevant pages, then fetch the .md version and grep:
-curl -s <page_url_with_.md> | grep -i -A 30 "keyword"
+{llms_index}
 
-**Option 2 — grep the full doc file over HTTP**
-curl -s {llms_full_url} | grep -i -A 30 "keyword"
+## How to answer questions
 
-**Option 3 — grep the local file (if HTTP is unreachable)**
-grep -i -A 30 "keyword" {llms_full_path}
+For every question, fetch the relevant page(s) from the index above before answering:
 
-Never skip all three. Never answer from memory alone — always fetch or grep first.
+  curl -s <page_url>/index.md
 
-## Handling any URL the user gives you
+Grep for a specific section if the page is long:
 
-When the user pastes a URL (with or without a `#section`):
+  curl -s <page_url>/index.md | grep -i -A 30 "keyword"
 
-1. Fetch `llms.txt` first (if not already done) — match the URL's path against the index
-   to find the canonical `.md` link for that page.
-2. Fetch the `.md` version of the page (clean Markdown, easier to grep than HTML):
-   - trailing `/`  →  append `index.md`   (e.g. `.../quickstart/` → `.../quickstart/index.md`)
-   - `.html` or no extension  →  swap for `index.md` at the same path
-3. If the URL has a `#fragment`, use the fragment words as grep keywords to jump
-   to the right section:
-   curl -s <page.md_url> | grep -i -A 30 "fragment words"
-4. If the path does not match anything in `llms.txt`, still try to fetch it as-is.
+If a page URL ends with `/` just append `index.md`. \
+If the user gives a URL with a `#fragment`, strip the fragment, fetch the `.md`, \
+then grep using the fragment words.
 
-## After looking up the docs
+## Fallback (only if curl is unreachable)
 
-- Answer based on what you found.
-- Quote or reference the specific sections.
-- If a topic is not in the docs after searching, say so clearly, \
-then you may use general knowledge — label it as "(outside the docs)".\
+  curl -s {llms_full_url} | grep -i -A 30 "keyword"
+  grep -i -A 30 "keyword" {llms_full_path}
+
+## Rules
+
+- Always fetch the page content before answering — never answer from memory alone.
+- Quote or reference the sections you found.
+- If a topic is not in the docs after checking, say so clearly and label \
+any general knowledge as "(outside the docs)".\
 """
 
 _SYSTEM_PROMPT_NO_DOCS = """\
@@ -127,27 +122,24 @@ but make it clear you are not drawing from site-specific documentation.\
 def _build_system_prompt(custom_prompt: str = "") -> str:
     """Return the system prompt for a new conversation session.
 
-    Claude is given the URL of ``llms.txt`` and instructed to use ``curl`` to
-    traverse it per the llmstxt.org protocol — fetching only what it needs,
-    so the context window is never pre-loaded with the full doc set.
-    A local file fallback is included for when the HTTP server is unreachable.
+    The ``llms.txt`` index is embedded directly so Claude has the page map from
+    the very first token — no need to instruct it to fetch the index first.
+    Individual page content is still fetched on demand via ``curl``.
     """
     if custom_prompt.strip():
         return custom_prompt.strip()
 
-    if not _llmstxt_url and not _site_dir:
+    llms_index = _read_llms_index()
+    if not llms_index and not _site_dir:
         return _SYSTEM_PROMPT_NO_DOCS
 
     full_path = _llms_full_path() or f"{_site_dir}/llms-full.txt"
-
-    # Derive llms-full.txt HTTP URL from llms.txt URL (same base, different filename)
     llms_full_url = _llmstxt_url.rsplit("/", 1)[0] + "/llms-full.txt" if _llmstxt_url else "(unavailable)"
 
     prompt = _SYSTEM_PROMPT.format(
-        llmstxt_url=_llmstxt_url or "(unavailable)",
+        llms_index=llms_index or "(index not available)",
         llms_full_url=llms_full_url,
         llms_full_path=full_path,
-        site_dir=_site_dir or "(unavailable)",
     )
     _logger.debug("system prompt built (%d chars)", len(prompt))
     return prompt

@@ -179,7 +179,11 @@ body.cc-resizing {
   font-size: 14px;
   line-height: 1.55;
   word-break: break-word;
-  white-space: pre-wrap;
+}
+
+.cc-bubble-user,
+.cc-bubble-error {
+  white-space: pre-wrap;   /* preserve newlines in user input and errors */
 }
 
 .cc-bubble-user {
@@ -228,9 +232,66 @@ body.cc-resizing {
   40%           { transform: scale(1);   opacity: 1;   }
 }
 
+/* ── Markdown rendering inside assistant bubbles ─────────────────── */
+.cc-bubble-assistant p { margin: 0 0 0.5em; }
+.cc-bubble-assistant p:last-child { margin-bottom: 0; }
+.cc-bubble-assistant h1,
+.cc-bubble-assistant h2,
+.cc-bubble-assistant h3,
+.cc-bubble-assistant h4,
+.cc-bubble-assistant h5,
+.cc-bubble-assistant h6 {
+  margin: 0.6em 0 0.2em;
+  line-height: 1.3;
+  font-weight: 600;
+}
+.cc-bubble-assistant h1 { font-size: 1.15em; }
+.cc-bubble-assistant h2 { font-size: 1.08em; }
+.cc-bubble-assistant h3,
+.cc-bubble-assistant h4,
+.cc-bubble-assistant h5,
+.cc-bubble-assistant h6 { font-size: 1em; }
+.cc-bubble-assistant code {
+  background: rgba(0, 0, 0, 0.07);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.84em;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+.cc-bubble-assistant pre {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  margin: 0.4em 0;
+  font-size: 0.82em;
+}
+.cc-bubble-assistant pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+.cc-bubble-assistant ul,
+.cc-bubble-assistant ol {
+  margin: 0.25em 0;
+  padding-left: 1.4em;
+}
+.cc-bubble-assistant li { margin-bottom: 0.15em; }
+.cc-bubble-assistant a {
+  color: var(--cc-primary);
+  text-decoration: underline;
+  word-break: break-all;
+}
+.cc-bubble-assistant hr {
+  border: none;
+  border-top: 1px solid var(--cc-border);
+  margin: 0.5em 0;
+}
+
 /* ── Input row ───────────────────────────────────────────────────── */
 .cc-input-row {
   display: flex;
+  align-items: flex-end;   /* keep send button at bottom when textarea grows */
   gap: 8px;
   padding: 12px 16px;
   border-top: 1px solid var(--cc-border);
@@ -244,10 +305,13 @@ body.cc-resizing {
   border-radius: 10px;
   padding: 9px 13px;
   font-size: 14px;
+  line-height: 1.45;
   color: var(--cc-text);
   background: var(--cc-bg);
   outline: none;
   resize: none;
+  overflow-y: hidden;
+  max-height: 120px;
   transition: border-color 0.15s ease;
   font-family: inherit;
 }

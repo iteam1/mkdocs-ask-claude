@@ -104,7 +104,7 @@
         <p class="cc-welcome">Ask a question about this documentation. Claude will answer using the docs as context.</p>
       </div>
       <div class="cc-input-row">
-        <input class="cc-input" type="text" placeholder="Ask a question…" autocomplete="off" />
+        <textarea class="cc-input" placeholder="Ask a question… (Shift+Enter for new line)" autocomplete="off" rows="1"></textarea>
         <button class="cc-send">Send</button>
       </div>`;
     return el;
@@ -131,6 +131,112 @@
     }
   }
 
+  // ── Markdown renderer ─────────────────────────────────────────────
+  function inlineMd(s) {
+    // protect inline code
+    var codes = [];
+    s = s.replace(/`([^`\n]+)`/g, function(_, c) {
+      codes.push(c); return "\x00C" + (codes.length - 1) + "\x00";
+    });
+    // protect links (before html escape so URLs stay intact)
+    var links = [];
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function(_, label, url) {
+      links.push({ label: label, url: url });
+      return "\x00L" + (links.length - 1) + "\x00";
+    });
+    // escape html
+    s = s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // bold + italic
+    s = s.replace(/\*\*\*([^*\n]+)\*\*\*/g, "<strong><em>$1</em></strong>");
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+    // restore links
+    s = s.replace(/\x00L(\d+)\x00/g, function(_, i) {
+      var l = links[+i];
+      var esc = l.label.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      return '<a href="' + l.url + '" target="_blank" rel="noopener noreferrer">' + esc + "</a>";
+    });
+    // restore inline code
+    s = s.replace(/\x00C(\d+)\x00/g, function(_, i) {
+      return "<code>" + codes[+i].replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") + "</code>";
+    });
+    return s;
+  }
+
+  function renderMarkdown(raw) {
+    // 1. extract fenced code blocks
+    var fences = [];
+    var s = raw.replace(/```([\w-]*)\n?([\s\S]*?)```/g, function(_, lang, code) {
+      var idx = fences.length;
+      var cls = lang ? ' class="language-' + lang.replace(/[^a-zA-Z0-9-]/g, "") + '"' : "";
+      fences.push("<pre><code" + cls + ">" +
+        code.replace(/^\n|\n$/g, "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") +
+        "</code></pre>");
+      return "\x00F" + idx + "\x00";
+    });
+
+    // 2. line-by-line
+    var lines = s.split("\n");
+    var out = [];
+    var i = 0;
+    while (i < lines.length) {
+      var line = lines[i];
+
+      // fence placeholder
+      if (/^\x00F\d+\x00$/.test(line.trim())) { out.push(line.trim()); i++; continue; }
+
+      // blank line
+      if (!line.trim()) { out.push("<br>"); i++; continue; }
+
+      // heading
+      var hm = line.match(/^(#{1,6})\s+(.*)/);
+      if (hm) { out.push("<h" + hm[1].length + ">" + inlineMd(hm[2]) + "</h" + hm[1].length + ">"); i++; continue; }
+
+      // hr
+      if (/^[-*_]{3,}\s*$/.test(line)) { out.push("<hr>"); i++; continue; }
+
+      // unordered list — collect consecutive items
+      if (/^[*\-+]\s/.test(line)) {
+        var items = [];
+        while (i < lines.length && /^[*\-+]\s/.test(lines[i])) {
+          items.push("<li>" + inlineMd(lines[i].replace(/^[*\-+]\s+/, "")) + "</li>");
+          i++;
+        }
+        out.push("<ul>" + items.join("") + "</ul>");
+        continue;
+      }
+
+      // ordered list — collect consecutive items
+      if (/^\d+\.\s/.test(line)) {
+        var items = [];
+        while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+          items.push("<li>" + inlineMd(lines[i].replace(/^\d+\.\s+/, "")) + "</li>");
+          i++;
+        }
+        out.push("<ol>" + items.join("") + "</ol>");
+        continue;
+      }
+
+      // paragraph — collect until structural break
+      var pLines = [];
+      while (i < lines.length) {
+        var l = lines[i];
+        if (!l.trim() || /^#{1,6}\s/.test(l) || /^[*\-+]\s/.test(l) || /^\d+\.\s/.test(l) ||
+            /^\x00F\d+\x00$/.test(l.trim()) || /^[-*_]{3,}\s*$/.test(l)) break;
+        pLines.push(inlineMd(l));
+        i++;
+      }
+      if (pLines.length) out.push("<p>" + pLines.join("<br>") + "</p>");
+    }
+
+    var html = out.join("")
+      .replace(/(<br>){2,}/g, "<br>")
+      .replace(/^(<br>)+|(<br>)+$/g, "");
+
+    // 3. restore fences
+    return html.replace(/\x00F(\d+)\x00/g, function(_, i) { return fences[+i]; });
+  }
+
   // ── Message rendering ─────────────────────────────────────────────
   function appendMessage(role, text) {
     const bubble = document.createElement("div");
@@ -139,17 +245,6 @@
     messagesEl.appendChild(bubble);
     scrollToBottom();
     return bubble;
-  }
-
-  function appendChunk(text) {
-    let last = messagesEl.querySelector(".cc-bubble-assistant:last-of-type");
-    if (!last || last.classList.contains("cc-bubble-error")) {
-      last = document.createElement("div");
-      last.className = "cc-bubble-assistant";
-      messagesEl.appendChild(last);
-    }
-    last.textContent += text;
-    scrollToBottom();
   }
 
   function appendError(text) {
@@ -209,22 +304,31 @@
     if (!question) return;
 
     inputEl.value = "";
+    inputEl.style.height = "auto";   // reset textarea height
     inputEl.disabled = true;
     sendEl.disabled = true;
 
     appendMessage("user", question);
     showLoading();
 
+    let streamBubble = null;
+    let rawText = "";
+
     try {
       for await (const payload of streamResponse(question)) {
-        if (payload === "[DONE]") {
-          break;
-        }
+        if (payload === "[DONE]") break;
         try {
           const data = JSON.parse(payload);
           if (data.text) {
             hideLoading();
-            appendChunk(data.text);
+            if (!streamBubble) {
+              streamBubble = document.createElement("div");
+              streamBubble.className = "cc-bubble-assistant";
+              messagesEl.appendChild(streamBubble);
+            }
+            rawText += data.text;
+            streamBubble.textContent = rawText;  // plain text while streaming
+            scrollToBottom();
           } else if (data.error) {
             hideLoading();
             appendError(data.error);
@@ -239,6 +343,11 @@
       appendError("Chat unavailable — " + (err.message || "server not running"));
     } finally {
       hideLoading();
+      // render accumulated markdown once streaming is done
+      if (streamBubble && rawText) {
+        streamBubble.innerHTML = renderMarkdown(rawText);
+        scrollToBottom();
+      }
       inputEl.disabled = false;
       sendEl.disabled = false;
       inputEl.focus();
@@ -345,6 +454,12 @@
 
     // Send on button click
     sendEl.addEventListener("click", sendMessage);
+
+    // Auto-resize textarea as user types
+    inputEl.addEventListener("input", function () {
+      this.style.height = "auto";
+      this.style.height = Math.min(this.scrollHeight, 120) + "px";
+    });
 
     // Send on Enter (not Shift+Enter)
     inputEl.addEventListener("keydown", function (e) {

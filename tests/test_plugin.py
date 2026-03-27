@@ -1,3 +1,102 @@
 """Tests for the MkDocs plugin hooks."""
 
 from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+from mkdocs.config.defaults import MkDocsConfig
+
+from mkdocs_claude_chat._internal.plugin import MkdocsClaudeChatPlugin
+
+
+def _make_config(tmp_path: Path, **plugin_opts: object) -> MkDocsConfig:
+    """Build a minimal MkDocsConfig with the plugin enabled."""
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    conf = MkDocsConfig()
+    conf.load_dict({
+        "site_name": "Test",
+        "site_url": "https://example.org/",
+        "site_dir": str(tmp_path / "site"),
+        "docs_dir": str(docs_dir),
+        "plugins": {"claude-chat": plugin_opts},
+    })
+    errors, warnings = conf.validate()
+    assert not errors, errors
+    return conf
+
+
+# --- on_config ---
+
+def test_on_config_registers_assets(tmp_path: Path) -> None:
+    conf = _make_config(tmp_path)
+    plugin: MkdocsClaudeChatPlugin = conf.plugins["claude-chat"]
+    plugin.on_config(conf)
+    assert "assets/chat.css" in conf["extra_css"]
+    assert "assets/chat.js" in conf["extra_javascript"]
+
+
+def test_on_config_derives_llmstxt_url(tmp_path: Path) -> None:
+    conf = _make_config(tmp_path)
+    plugin: MkdocsClaudeChatPlugin = conf.plugins["claude-chat"]
+    plugin.on_config(conf)
+    assert plugin._llmstxt_url == "https://example.org/llms.txt"
+
+
+def test_on_config_uses_explicit_llmstxt_url(tmp_path: Path) -> None:
+    conf = _make_config(tmp_path, llmstxt_url="https://custom.example.com/llms.txt")
+    plugin: MkdocsClaudeChatPlugin = conf.plugins["claude-chat"]
+    plugin.on_config(conf)
+    assert plugin._llmstxt_url == "https://custom.example.com/llms.txt"
+
+
+def test_on_config_disabled_returns_none(tmp_path: Path) -> None:
+    conf = _make_config(tmp_path, enabled=False)
+    plugin: MkdocsClaudeChatPlugin = conf.plugins["claude-chat"]
+    result = plugin.on_config(conf)
+    assert result is None
+    assert "assets/chat.css" not in conf["extra_css"]
+
+
+# --- on_post_build ---
+
+def test_on_post_build_copies_assets(tmp_path: Path) -> None:
+    conf = _make_config(tmp_path)
+    plugin: MkdocsClaudeChatPlugin = conf.plugins["claude-chat"]
+    plugin.on_config(conf)
+    plugin.on_post_build(config=conf)
+    assert (tmp_path / "site" / "assets" / "chat.css").exists()
+    assert (tmp_path / "site" / "assets" / "chat.js").exists()
+
+
+def test_on_post_build_disabled_no_copy(tmp_path: Path) -> None:
+    conf = _make_config(tmp_path, enabled=False)
+    plugin: MkdocsClaudeChatPlugin = conf.plugins["claude-chat"]
+    plugin.on_post_build(config=conf)
+    assert not (tmp_path / "site" / "assets" / "chat.css").exists()
+
+
+# --- on_page_context ---
+
+def test_on_page_context_injects_config(tmp_path: Path) -> None:
+    conf = _make_config(tmp_path)
+    plugin: MkdocsClaudeChatPlugin = conf.plugins["claude-chat"]
+    plugin.on_config(conf)
+    context: dict = {}
+    plugin.on_page_context(context, page=object(), config=conf)  # type: ignore[arg-type]
+    cfg = context["claude_chat_config"]
+    assert "model" in cfg
+    assert "chat_title" in cfg
+    assert "position" in cfg
+    assert "llmstxt_url" in cfg
+    assert "system_prompt" in cfg
+
+
+def test_on_page_context_disabled_returns_none(tmp_path: Path) -> None:
+    conf = _make_config(tmp_path, enabled=False)
+    plugin: MkdocsClaudeChatPlugin = conf.plugins["claude-chat"]
+    context: dict = {}
+    result = plugin.on_page_context(context, page=object(), config=conf)  # type: ignore[arg-type]
+    assert result is None
+    assert "claude_chat_config" not in context

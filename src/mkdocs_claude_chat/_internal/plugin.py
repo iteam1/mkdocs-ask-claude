@@ -2,9 +2,99 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from mkdocs.plugins import BasePlugin
+
+from mkdocs_claude_chat._internal import assets
 from mkdocs_claude_chat._internal.config import _PluginConfig
+from mkdocs_claude_chat._internal.logger import get_logger
+
+if TYPE_CHECKING:
+    from mkdocs.config.defaults import MkDocsConfig
+    from mkdocs.structure.pages import Page
+
+_logger = get_logger(__name__)
 
 
 class MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig]):
     """MkDocs plugin that injects a Claude-powered chatbot widget into every page."""
+
+    _llmstxt_url: str
+
+    def on_config(self, config: MkDocsConfig, **kwargs: object) -> MkDocsConfig | None:
+        """Register chat assets and resolve the llms.txt URL.
+
+        Called once at the start of every MkDocs build or serve cycle. Appends
+        the plugin's CSS and JS to the MkDocs extra-assets lists and stores the
+        resolved ``llmstxt_url`` for later use in :meth:`on_page_context`.
+
+        Args:
+            config: The global MkDocs configuration object.
+            **kwargs: Accepted for forward-compatibility with future MkDocs versions.
+
+        Returns:
+            The (mutated) config object, or ``None`` when the plugin is disabled.
+        """
+        if not self.config.enabled:
+            return None
+
+        if self.config.llmstxt_url:
+            self._llmstxt_url = self.config.llmstxt_url.rstrip("/")
+        else:
+            site_url = (config.get("site_url") or "").rstrip("/")
+            self._llmstxt_url = f"{site_url}/llms.txt" if site_url else ""
+
+        assets.register(config["extra_css"], config["extra_javascript"])
+        _logger.debug("registered chat assets, llmstxt_url=%s", self._llmstxt_url)
+        return config
+
+    def on_post_build(self, *, config: MkDocsConfig, **kwargs: object) -> None:
+        """Copy bundled chat assets into the built site directory.
+
+        Called once after all pages have been written. Copies ``chat.css`` and
+        ``chat.js`` from the package into ``<site_dir>/assets/``.
+
+        Args:
+            config: The global MkDocs configuration object.
+            **kwargs: Accepted for forward-compatibility with future MkDocs versions.
+        """
+        if not self.config.enabled:
+            return
+        assets.copy_to_site(config["site_dir"])
+        _logger.debug("copied chat assets to site_dir")
+
+    def on_page_context(
+        self,
+        context: dict,
+        /,
+        *,
+        page: Page,
+        config: MkDocsConfig,
+        **kwargs: object,
+    ) -> dict | None:
+        """Inject the chat widget configuration into each page's template context.
+
+        Adds ``claude_chat_config`` to the Jinja2 context so themes can render
+        ``window.__CLAUDE_CHAT_CONFIG__`` into the page HTML.
+
+        Args:
+            context: The Jinja2 template context for the current page.
+            page: The MkDocs ``Page`` object being rendered.
+            config: The global MkDocs configuration object.
+            **kwargs: Accepted for forward-compatibility with future MkDocs versions.
+
+        Returns:
+            The (mutated) context dict, or ``None`` when the plugin is disabled.
+        """
+        if not self.config.enabled:
+            return None
+
+        context["claude_chat_config"] = {
+            "model": self.config.model,
+            "chat_title": self.config.chat_title,
+            "position": self.config.position,
+            "llmstxt_url": self._llmstxt_url,
+            "system_prompt": self.config.system_prompt or "",
+        }
+        return context

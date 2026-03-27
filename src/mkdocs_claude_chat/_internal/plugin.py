@@ -23,6 +23,7 @@ class MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig]):
     """MkDocs plugin that injects a Claude-powered chatbot widget into every page."""
 
     _llmstxt_url: str
+    _is_serving: bool = False
 
     def on_config(self, config: MkDocsConfig, **kwargs: object) -> MkDocsConfig | None:
         """Register chat assets and resolve the llms.txt URL.
@@ -43,6 +44,11 @@ class MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig]):
 
         if self.config.llmstxt_url:
             self._llmstxt_url = self.config.llmstxt_url.rstrip("/")
+        elif self._is_serving:
+            # During `mkdocs serve` use the local dev server address so Claude
+            # can actually fetch the llms.txt that was just built.
+            dev_addr = config.get("dev_addr") or "127.0.0.1:8000"
+            self._llmstxt_url = f"http://{dev_addr}/llms.txt"
         else:
             site_url = (config.get("site_url") or "").rstrip("/")
             self._llmstxt_url = f"{site_url}/llms.txt" if site_url else ""
@@ -111,6 +117,7 @@ class MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig]):
         """
         if command != "serve" or not self.config.enabled:
             return
+        self._is_serving = True
         _logger.info("starting chat backend on http://localhost:8001")
 
         def _run() -> None:

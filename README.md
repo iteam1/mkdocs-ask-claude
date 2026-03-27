@@ -41,19 +41,23 @@ index — Claude will use it automatically for faster, more accurate answers.
 | `chat_title` | str | `Ask Claude` | Widget button label |
 | `position` | str | `bottom-right` | Widget position (`bottom-right` or `bottom-left`) |
 
-## Related Projects
+## Related to
 
 ### MkDocs ecosystem
 
 - [**MkDocs**](https://www.mkdocs.org/) — Static site generator for project documentation ([GitHub](https://github.com/mkdocs/mkdocs))
 - [**MkDocs Catalog**](https://github.com/mkdocs/catalog) — Community catalog of MkDocs plugins and themes
 - [**mkdocstrings**](https://github.com/mkdocstrings/mkdocstrings) — Automatic API documentation generation from docstrings
-- [**mkdocs-llmstxt**](https://github.com/pawamoy/mkdocs-llmstxt) — Generates `/llms.txt` index files for AI consumption (required by this plugin)
+- [**mkdocs-llmstxt**](https://github.com/pawamoy/mkdocs-llmstxt) — Generates `/llms.txt` index files for AI consumption (optional, improves answer quality)
 - [**mkdocs-obsidian-interactive-graph-plugin**](https://daxcore.github.io/mkdocs-obsidian-interactive-graph-plugin/) — Interactive graph visualization for MkDocs
 
 ### AI / Claude
 
 - [**claude-agent-sdk-python**](https://github.com/anthropics/claude-agent-sdk-python) — Official Python SDK for Claude agentic workflows (used by this plugin)
+
+### Development
+
+- [**spec-driven.md**](https://github.com/github/spec-kit/blob/main/spec-driven.md) — Spec-driven development methodology used to design this plugin
 
 ### Templating
 

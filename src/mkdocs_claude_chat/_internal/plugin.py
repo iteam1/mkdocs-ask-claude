@@ -101,23 +101,27 @@ class MkdocsClaudeChatPlugin(BasePlugin[_PluginConfig]):
         }
         return context
 
-    def on_serve(self, server_obj: object, *, config: MkDocsConfig, builder: object, **kwargs: object) -> None:
-        """Start the chat backend server when ``mkdocs serve`` is invoked.
-
-        Launches the FastAPI sidecar on port 8001 in a daemon thread so it
-        stops automatically when the MkDocs serve process exits.
+    def on_startup(self, *, command: str, dirty: bool, **kwargs: object) -> None:
+        """Start the chat backend when ``mkdocs serve`` is invoked.
 
         Args:
-            server_obj: The MkDocs LiveReloadServer instance (unused).
-            config: The global MkDocs configuration object.
-            builder: The MkDocs builder callable (unused).
-            **kwargs: Accepted for forward-compatibility with future MkDocs versions.
+            command: The MkDocs command being run (``"serve"``, ``"build"``, etc.).
+            dirty: Whether a dirty build was requested.
+            **kwargs: Accepted for forward-compatibility.
         """
-        if not self.config.enabled:
+        if command != "serve" or not self.config.enabled:
             return
-        _logger.info("starting chat backend on port 8001")
-        t = threading.Thread(target=server.run, daemon=True)
+        _logger.info("starting chat backend on http://localhost:8001")
+
+        def _run() -> None:
+            try:
+                server.run()
+            except Exception as exc:  # noqa: BLE001
+                _logger.error("chat backend crashed: %s", exc)
+
+        t = threading.Thread(target=_run, daemon=True)
         t.start()
+
 
     def on_post_page(
         self,

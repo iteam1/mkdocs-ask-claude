@@ -67,12 +67,38 @@ sequenceDiagram
     server.py-->>Browser: streamed response
 ```
 
+## Module Dependencies
+
+```plantuml
+@startuml
+skinparam componentStyle rectangle
+
+component "plugin.py" as plugin
+component "config.py" as config
+component "assets.py" as assets
+component "server.py" as server
+component "logger.py" as logger
+
+plugin --> config : reads
+plugin --> assets : injects at build time
+plugin --> server : starts on serve
+logger <-- plugin : used by
+logger <-- server : used by
+logger <-- assets : used by
+
+note right of server
+  FastAPI + uvicorn sidecar
+  POST /chat → SSE stream
+end note
+@enduml
+```
+
 ## Implementation Status
 
 | Module | Status | Notes |
 |---|---|---|
 | `config.py` | Done | Full config schema |
-| `plugin.py` | Partial | Class declared, hooks not implemented |
-| `assets.py` | Stub | Empty |
-| `server.py` | Stub | Empty |
-| `logger.py` | Stub | Empty |
+| `plugin.py` | Done | on_config, on_post_build, on_page_context, on_post_page, on_startup |
+| `assets.py` | Done | CSS/JS injection + copy |
+| `server.py` | Done | FastAPI chat backend, SSE streaming |
+| `logger.py` | Done | Plugin-namespaced logging adapter |

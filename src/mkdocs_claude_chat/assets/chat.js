@@ -265,6 +265,64 @@
     return html.replace(/\x00F(\d+)\x00/g, function(_, i) { return fences[+i]; });
   }
 
+  // ── Tool call rendering ───────────────────────────────────────────
+  let _toolBlocks = {};  // id → { el, outputEl, statusEl } — reset per message
+
+  function showToolCall(id, name, command) {
+    const wrap = document.createElement("div");
+    wrap.className = "cc-tool-call";
+
+    const label = name === "Bash" ? (command ? truncateCmd(command) : "bash") :
+                  name === "WebFetch" ? (command || "fetch") :
+                  name === "WebSearch" ? (command || "search") : name;
+
+    wrap.innerHTML =
+      '<div class="cc-tool-header">' +
+        '<span class="cc-tool-status"></span>' +
+        '<span class="cc-tool-label">' + escapeHtml(label) + '</span>' +
+        '<span class="cc-tool-toggle">▾</span>' +
+      '</div>' +
+      '<div class="cc-tool-body">' +
+        (command ? '<pre class="cc-tool-cmd">' + escapeHtml(command) + '</pre>' : '') +
+        '<pre class="cc-tool-output"></pre>' +
+      '</div>';
+
+    const header = wrap.querySelector(".cc-tool-header");
+    const body   = wrap.querySelector(".cc-tool-body");
+    const toggle = wrap.querySelector(".cc-tool-toggle");
+    header.addEventListener("click", function () {
+      const open = body.style.display !== "none";
+      body.style.display = open ? "none" : "";
+      toggle.textContent = open ? "▸" : "▾";
+    });
+
+    messagesEl.appendChild(wrap);
+    scrollToBottom();
+    _toolBlocks[id] = {
+      el: wrap,
+      outputEl: wrap.querySelector(".cc-tool-output"),
+      statusEl: wrap.querySelector(".cc-tool-status"),
+    };
+  }
+
+  function updateToolResult(id, output, isError) {
+    const block = _toolBlocks[id];
+    if (!block) return;
+    block.statusEl.className = "cc-tool-status " + (isError ? "error" : "done");
+    const trimmed = (output || "").trim();
+    if (trimmed) {
+      block.outputEl.textContent = trimmed.length > 2000 ? trimmed.slice(0, 2000) + "\n…(truncated)" : trimmed;
+    } else {
+      block.outputEl.style.display = "none";
+    }
+    scrollToBottom();
+  }
+
+  function truncateCmd(cmd) {
+    const first = cmd.split("\n")[0].trim();
+    return first.length > 60 ? first.slice(0, 57) + "…" : first;
+  }
+
   // ── Message rendering ─────────────────────────────────────────────
   function appendMessage(role, text) {
     const bubble = document.createElement("div");
@@ -341,6 +399,7 @@
 
     let streamBubble = null;
     let rawText = "";
+    _toolBlocks = {};  // reset tool blocks for this message
 
     try {
       for await (const payload of streamResponse(question)) {
@@ -357,6 +416,13 @@
             rawText += data.text;
             streamBubble.textContent = rawText;  // plain text while streaming
             scrollToBottom();
+          } else if (data.tool_call) {
+            hideLoading();
+            const tc = data.tool_call;
+            showToolCall(tc.id, tc.name, tc.command || "");
+          } else if (data.tool_result) {
+            const tr = data.tool_result;
+            updateToolResult(tr.id, tr.output, tr.is_error);
           } else if (data.error) {
             hideLoading();
             appendError(data.error);

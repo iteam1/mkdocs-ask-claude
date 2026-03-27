@@ -23,7 +23,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, ClaudeSDKClient, TextBlock
+from claude_agent_sdk import (
+    AssistantMessage,
+    ClaudeAgentOptions,
+    ClaudeSDKClient,
+    TextBlock,
+    ToolResultBlock,
+    ToolUseBlock,
+    UserMessage,
+)
 
 from mkdocs_claude_chat._internal.logger import get_logger
 
@@ -188,6 +196,30 @@ async def _worker(question_q: asyncio.Queue, system_prompt: str) -> None:  # typ
                             for block in message.content:
                                 if isinstance(block, TextBlock) and block.text:
                                     await reply_q.put(("text", block.text))
+                                elif isinstance(block, ToolUseBlock):
+                                    cmd = ""
+                                    if isinstance(block.input, dict):
+                                        cmd = block.input.get("command") or block.input.get("url") or ""
+                                    await reply_q.put(("tool_call", {
+                                        "id": block.id,
+                                        "name": block.name,
+                                        "command": cmd,
+                                    }))
+                        elif isinstance(message, UserMessage):
+                            for block in (message.content if isinstance(message.content, list) else []):
+                                if isinstance(block, ToolResultBlock):
+                                    content = block.content
+                                    if isinstance(content, list):
+                                        # list of dicts, e.g. [{"type": "text", "text": "..."}]
+                                        content = "\n".join(
+                                            item.get("text", "") for item in content
+                                            if isinstance(item, dict) and item.get("text")
+                                        )
+                                    await reply_q.put(("tool_result", {
+                                        "id": block.tool_use_id,
+                                        "output": content or "",
+                                        "is_error": bool(block.is_error),
+                                    }))
                 except Exception as exc:  # noqa: BLE001
                     _logger.error("worker error: %s", exc, exc_info=True)
                     await reply_q.put(("error", str(exc)))
@@ -273,6 +305,10 @@ async def _stream_claude(
                         break
                     elif kind == "text":
                         yield f"data: {json.dumps({'text': payload})}\n\n"
+                    elif kind == "tool_call":
+                        yield f"data: {json.dumps({'tool_call': payload})}\n\n"
+                    elif kind == "tool_result":
+                        yield f"data: {json.dumps({'tool_result': payload})}\n\n"
             finally:
                 task.cancel()
             yield "data: [DONE]\n\n"
@@ -287,6 +323,10 @@ async def _stream_claude(
                 break
             elif kind == "text":
                 yield f"data: {json.dumps({'text': payload})}\n\n"
+            elif kind == "tool_call":
+                yield f"data: {json.dumps({'tool_call': payload})}\n\n"
+            elif kind == "tool_result":
+                yield f"data: {json.dumps({'tool_result': payload})}\n\n"
 
     except Exception as exc:  # noqa: BLE001
         _logger.error("stream error: %s", exc, exc_info=True)

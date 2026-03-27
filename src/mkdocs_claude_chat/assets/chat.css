@@ -366,6 +366,94 @@ body.cc-resizing {
   cursor: not-allowed;
 }
 
+/* ── Tool call blocks ────────────────────────────────────────────── */
+.cc-tool-call {
+  align-self: flex-start;
+  width: 100%;
+  max-width: 95%;
+  border: 1px solid var(--cc-border);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+  background: var(--cc-surface);
+}
+
+.cc-tool-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--cc-surface);
+  border-bottom: 1px solid var(--cc-border);
+}
+
+.cc-tool-header:hover {
+  background: var(--cc-border);
+}
+
+.cc-tool-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #f59e0b;
+  animation: cc-pulse 1.2s infinite ease-in-out;
+}
+
+.cc-tool-status.done {
+  background: #22c55e;
+  animation: none;
+}
+
+.cc-tool-status.error {
+  background: #ef4444;
+  animation: none;
+}
+
+@keyframes cc-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50%       { opacity: 1;   transform: scale(1.1); }
+}
+
+.cc-tool-label {
+  flex: 1;
+  color: var(--cc-text);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cc-tool-toggle {
+  color: var(--cc-text-muted);
+  font-size: 10px;
+}
+
+.cc-tool-body {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.cc-tool-cmd,
+.cc-tool-output {
+  margin: 0;
+  padding: 7px 10px;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.45;
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--cc-text);
+}
+
+.cc-tool-cmd {
+  border-bottom: 1px solid var(--cc-border);
+  color: var(--cc-text-muted);
+}
+
 /* ── Mobile ──────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
   #claude-chat-panel {

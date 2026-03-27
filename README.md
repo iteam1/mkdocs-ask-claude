@@ -68,6 +68,12 @@ Run `mkdocs serve` — a chat button appears on every page.
 4. For each question, Claude identifies all relevant pages, fetches them via `curl`, and synthesizes the answer
 5. You can watch each fetch happen live — tool calls appear as collapsible blocks in the chat panel
 
-## License
+## Related to
 
-ISC
+- [MkDocs](https://www.mkdocs.org/)
+- [MkDocs GitHub](https://github.com/mkdocs/mkdocs)
+- [MkDocs Catalog](https://github.com/mkdocs/catalog)
+- [mkdocs-llmstxt](https://github.com/pawamoy/mkdocs-llmstxt)
+- [mkdocs-awesome-pages-plugin](https://henrywhitaker3.github.io/mkdocs-material-dark-theme/plugins/awesome-pages/)
+- [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview)
+- [mkdocs-obsidian-interactive-graph-plugin](https://github.com/daxcore/mkdocs-obsidian-interactive-graph-plugin)

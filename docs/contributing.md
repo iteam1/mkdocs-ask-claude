@@ -19,19 +19,30 @@ pip install pytest pytest-asyncio httpx fastapi uvicorn mkdocs-material
 
 ## Project structure
 
-```
-src/mkdocs_claude_chat/
-├── __init__.py               # Public re-export of MkdocsClaudeChatPlugin
-├── py.typed                  # PEP 561 marker
-├── assets/
-│   ├── chat.js               # Widget — draggable button, panel, SSE streaming
-│   └── chat.css              # Widget styles + CSS custom properties
-└── _internal/
-    ├── plugin.py             # MkDocs plugin (on_config, on_post_build, on_page_context, on_startup)
-    ├── config.py             # Plugin config schema (_PluginConfig)
-    ├── server.py             # FastAPI chat backend (POST /chat, GET /health)
-    ├── assets.py             # Asset registration + copy helpers
-    └── logger.py             # Plugin-namespaced logging adapter
+```plantuml
+@startwbs
+* src/mkdocs_claude_chat/
+** __init__.py
+*** Public re-export of MkdocsClaudeChatPlugin
+** py.typed
+*** PEP 561 marker
+** assets/
+*** chat.js
+**** Draggable button · panel · SSE streaming
+*** chat.css
+**** Widget styles · CSS custom properties
+** _internal/
+*** plugin.py
+**** on_config · on_post_build · on_page_context · on_startup
+*** config.py
+**** Plugin config schema (_PluginConfig)
+*** server.py
+**** FastAPI chat backend (POST /chat · GET /health)
+*** assets.py
+**** Asset registration + copy helpers
+*** logger.py
+**** Plugin-namespaced logging adapter
+@endwbs
 ```
 
 ## Running tests

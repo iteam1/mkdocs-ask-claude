@@ -63,20 +63,26 @@ If `llmstxt_url` is not set and your `mkdocs.yml` has a `site_url`, the plugin a
 
 ## What happens behind the scenes
 
-```
-mkdocs serve
-    │
-    ├── Plugin injects chat.js + chat.css into every page
-    ├── Plugin starts FastAPI sidecar on port 8001
-    │
-    └── Browser loads page
-            │
-            ├── Chat button appears (bottom-right)
-            └── User asks a question
-                    │
-                    └── POST http://localhost:8001/chat
-                                │
-                                └── Claude reads llms.txt → fetches pages → streams answer
+```mermaid
+sequenceDiagram
+    participant MkDocs as mkdocs serve
+    participant Plugin as claude-chat plugin
+    participant Browser
+    participant Server as FastAPI :8001
+    participant Claude
+
+    MkDocs->>Plugin: on_startup(command='serve')
+    Plugin->>Server: start sidecar thread
+    MkDocs->>Plugin: on_post_page (each page)
+    Plugin->>Browser: inject chat.js + chat.css + config
+
+    Browser->>Browser: chat button appears
+    Browser->>Server: POST /chat {question}
+    Server->>Claude: claude-agent-sdk query
+    Claude->>Claude: fetch llms.txt → fetch doc pages
+    Claude-->>Server: answer chunks
+    Server-->>Browser: SSE stream
+    Browser->>Browser: render answer word-by-word
 ```
 
 ---

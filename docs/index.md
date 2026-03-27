@@ -8,12 +8,14 @@ Readers can ask questions in natural language and get accurate, streamed answers
 
 ## How it works
 
-```
-Browser widget  →  POST /chat  →  FastAPI sidecar  →  Claude (built-in tools)
-                                                              ↓
-                                                       reads llms.txt
-                                                       fetches doc pages
-                                                       streams answer back
+```mermaid
+flowchart LR
+    A([Browser widget]) -->|POST /chat| B([FastAPI sidecar\nport 8001])
+    B -->|claude-agent-sdk| C([Claude])
+    C -->|1. reads| D[(llms.txt\nindex)]
+    C -->|2. fetches| E[(doc pages)]
+    C -->|3. streams answer| B
+    B -->|SSE chunks| A
 ```
 
 1. The plugin injects a floating chat button into every page

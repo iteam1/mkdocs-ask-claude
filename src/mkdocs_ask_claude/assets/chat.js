@@ -341,11 +341,7 @@
       toggle.textContent = open ? "▸" : "▾";
     });
 
-    if (_currentStreamBubble && _currentStreamBubble.parentNode === messagesEl) {
-      messagesEl.insertBefore(wrap, _currentStreamBubble);
-    } else {
-      messagesEl.appendChild(wrap);
-    }
+    messagesEl.appendChild(wrap);
     scrollToBottom();
     _toolBlocks[id] = {
       el: wrap,
@@ -493,12 +489,7 @@
     let rawText = "";
     _toolBlocks = {};          // reset tool blocks for this message
     _pendingToolHistory = {};  // reset pending tool history entries
-
-    // Pre-create the answer bubble so tool blocks can always be inserted before it
-    _currentStreamBubble = document.createElement("div");
-    _currentStreamBubble.className = "cc-bubble-assistant";
-    _currentStreamBubble.style.display = "none";
-    messagesEl.appendChild(_currentStreamBubble);
+    _currentStreamBubble = null;
 
     try {
       for await (const payload of streamResponse(question)) {
@@ -507,7 +498,11 @@
           const data = JSON.parse(payload);
           if (data.text) {
             hideLoading();
-            _currentStreamBubble.style.display = "";
+            if (!_currentStreamBubble) {
+              _currentStreamBubble = document.createElement("div");
+              _currentStreamBubble.className = "cc-bubble-assistant";
+              messagesEl.appendChild(_currentStreamBubble);
+            }
             rawText += data.text;
             _currentStreamBubble.textContent = rawText;  // plain text while streaming
             scrollToBottom();
@@ -532,14 +527,11 @@
       appendError("Chat unavailable — " + (err.message || "server not running"));
     } finally {
       hideLoading();
-      if (rawText) {
+      if (_currentStreamBubble && rawText) {
         const html = renderMarkdown(rawText);
         _currentStreamBubble.innerHTML = html;
         addToHistory({ type: "assistant", html: html });
         scrollToBottom();
-      } else if (_currentStreamBubble) {
-        // no text received — remove the empty placeholder
-        _currentStreamBubble.parentNode && _currentStreamBubble.parentNode.removeChild(_currentStreamBubble);
       }
       _currentStreamBubble = null;
       inputEl.disabled = false;

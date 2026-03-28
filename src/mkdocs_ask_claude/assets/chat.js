@@ -135,7 +135,7 @@
     el.innerHTML = `
       <div id="ask-claude-resize" aria-hidden="true"></div>
       <div class="cc-header">
-        <span class="cc-title">${escapeHtml(cfg.chatTitle)}</span>
+        <span class="cc-title"><span class="cc-status-dot"></span>${escapeHtml(cfg.chatTitle)}</span>
         <button class="cc-close" aria-label="Close chat">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -421,6 +421,19 @@
     }
   }
 
+  // ── Health check ─────────────────────────────────────────────────
+  function checkHealth() {
+    var dot = panel && panel.querySelector(".cc-status-dot");
+    if (!dot) return;
+    fetch(cfg.backendUrl + "/health", { method: "GET" })
+      .then(function(r) {
+        dot.className = "cc-status-dot " + (r.ok ? "ok" : "error");
+      })
+      .catch(function() {
+        dot.className = "cc-status-dot error";
+      });
+  }
+
   // ── SSE streaming ─────────────────────────────────────────────────
   async function* streamResponse(question) {
     const res = await fetch(cfg.backendUrl + "/chat", {
@@ -665,6 +678,10 @@
 
     // Restore chat history from previous page visits
     restoreHistory();
+
+    // Health check — run immediately then every 30 seconds
+    checkHealth();
+    setInterval(checkHealth, 30000);
 
     // Pointer events for button drag + tap
     btn.addEventListener("pointerdown", onPointerDown);

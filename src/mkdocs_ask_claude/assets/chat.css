@@ -130,14 +130,23 @@ body.cc-resizing {
   gap: 8px;
 }
 
-.cc-title::before {
-  content: '';
+.cc-status-dot {
   display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: #9ca3af;
   box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.3);
+  flex-shrink: 0;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+.cc-status-dot.ok {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+}
+.cc-status-dot.error {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
 
 .cc-close {

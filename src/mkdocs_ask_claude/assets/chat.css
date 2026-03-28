@@ -2,14 +2,14 @@
 
 /* ── Custom properties ───────────────────────────────────────────── */
 :root {
-  --cc-primary: #5b6ee1;
-  --cc-primary-hover: #4757c8;
+  --cc-primary: #d97706;
+  --cc-primary-hover: #b45309;
   --cc-bg: #ffffff;
   --cc-surface: #f7f8fc;
   --cc-text: #1a1a2e;
   --cc-text-muted: #6b7280;
   --cc-border: #e5e7eb;
-  --cc-user-bubble: #5b6ee1;
+  --cc-user-bubble: #d97706;
   --cc-user-text: #ffffff;
   --cc-assistant-bubble: #f1f3f9;
   --cc-assistant-text: #1a1a2e;
@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(91, 110, 225, 0.4);
+  box-shadow: 0 4px 16px rgba(217, 119, 6, 0.4);
   transition: box-shadow 0.15s ease, background 0.15s ease;
   user-select: none;
   -webkit-user-select: none;
@@ -43,17 +43,17 @@
 
 #ask-claude-btn:hover {
   background: var(--cc-primary-hover);
-  box-shadow: 0 6px 20px rgba(91, 110, 225, 0.55);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.55);
 }
 
 #ask-claude-btn.dragging {
   cursor: grabbing;
-  box-shadow: 0 8px 24px rgba(91, 110, 225, 0.6);
+  box-shadow: 0 8px 24px rgba(217, 119, 6, 0.6);
 }
 
 #ask-claude-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   pointer-events: none;
 }
 
@@ -204,7 +204,7 @@ body.cc-resizing {
   color: var(--cc-user-text);
   align-self: flex-end;
   border-bottom-right-radius: 4px;
-  box-shadow: 0 2px 8px rgba(91, 110, 225, 0.25);
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
 }
 
 .cc-bubble-assistant {

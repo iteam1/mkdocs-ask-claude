@@ -70,10 +70,10 @@ Run `mkdocs serve` — a chat button appears on every page.
 
 ## Related to
 
-- [MkDocs](https://www.mkdocs.org/)
-- [MkDocs GitHub](https://github.com/mkdocs/mkdocs)
-- [MkDocs Catalog](https://github.com/mkdocs/catalog)
-- [mkdocs-llmstxt](https://github.com/pawamoy/mkdocs-llmstxt)
-- [mkdocs-awesome-pages-plugin](https://henrywhitaker3.github.io/mkdocs-material-dark-theme/plugins/awesome-pages/)
-- [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview)
-- [mkdocs-obsidian-interactive-graph-plugin](https://github.com/daxcore/mkdocs-obsidian-interactive-graph-plugin)
+- [MkDocs](https://www.mkdocs.org/) - Project documentation with Markdown.
+- [MkDocs GitHub](https://github.com/mkdocs/mkdocs) - GitHub Project documentation with Markdown. 
+- [MkDocs Catalog](https://github.com/mkdocs/catalog) -  🏆 📚 A list of awesome MkDocs projects and plugins. 
+- [mkdocs-llmstxt](https://github.com/pawamoy/mkdocs-llmstxt) -  MkDocs plugin to generate an /llms.txt file (https://llmstxt.org/).
+- [mkdocs-awesome-pages-plugin](https://henrywhitaker3.github.io/mkdocs-material-dark-theme/plugins/awesome-pages/) -  Material for MkDocs 
+- [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) - Build production AI agents with Claude Code as a library
+- [mkdocs-obsidian-interactive-graph-plugin](https://github.com/daxcore/mkdocs-obsidian-interactive-graph-plugin) -  interactive graph for Material for MkDocs like Obsidian
